@@ -146,7 +146,49 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        def minimax(gameState, depth, agentID):
+    # Comprobación de condiciones de finalización de la recursión
+            if depth == self.depth or gameState.isWin() or gameState.isLose():
+                return self.evaluationFunction(gameState)  # Evaluar el estado del juego
+
+            # Turno del jugador maximizador (agente ID = 0)
+            if agentID == 0:
+                if len(gameState.getLegalActions()) == 0:
+                    return self.evaluationFunction(gameState)  # No hay acciones legales disponibles
+                v = float('-inf')  # Inicializar valor v como negativo infinito
+                ac = Directions.STOP  # Inicializar acción ac como parar
+                # Iterar sobre todas las acciones legales disponibles
+                for a in gameState.getLegalActions():
+                    # Recursivamente llamar minimax para el siguiente estado
+                    s = minimax(gameState.generateSuccessor(0, a), depth, 1)
+                    if s > v:
+                        v = s  # Actualizar v con el máximo valor encontrado
+                        ac = a  # Actualizar ac con la acción correspondiente al máximo valor
+                if depth == 0:
+                    return ac  # Devolver la mejor acción si estamos en el nivel 0
+                else:
+                    return v  # Devolver el valor máximo encontrado
+
+            # Turno del jugador minimizador (otros agentes)
+            else:
+                if len(gameState.getLegalActions()) == 0:
+                    return self.evaluationFunction(gameState)  # No hay acciones legales disponibles
+                v = float('inf')  # Inicializar valor v como infinito
+                nextAgent = agentID + 1  # Determinar el siguiente agente
+                if nextAgent == gameState.getNumAgents():
+                    nextAgent = 0  # Reiniciar al primer agente si se alcanza el último
+                # Iterar sobre todas las acciones legales disponibles para el agente actual
+                for a in gameState.getLegalActions(agentID):
+                    if nextAgent == 0:
+                        s = minimax(gameState.generateSuccessor(agentID, a), depth + 1, 0)
+                    else:
+                        s = minimax(gameState.generateSuccessor(agentID, a), depth, nextAgent)
+                    v = min(s, v)  # Actualizar v con el mínimo valor encontrado
+                return v  # Devolver el valor mínimo encontrado
+
+        # Llamar a minimax con el estado de juego inicial y los parámetros iniciales
+        return minimax(gameState, 0, 0)
+
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
     """
