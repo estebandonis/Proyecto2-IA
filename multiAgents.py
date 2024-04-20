@@ -146,48 +146,47 @@ class MinimaxAgent(MultiAgentSearchAgent):
         Returns the total number of agents in the game
         """
         "*** YOUR CODE HERE ***"
-        def minimax(gameState, depth, agentID):
-    # Comprobación de condiciones de finalización de la recursión
-            if depth == self.depth or gameState.isWin() or gameState.isLose():
-                return self.evaluationFunction(gameState)  # Evaluar el estado del juego
+        # Devuelve la acción óptima (primer elemento de la tupla) obtenida del resultado de maxval
+        return self.maxval(gameState, 0, 0)[0]
 
-            # Turno del jugador maximizador (agente ID = 0)
-            if agentID == 0:
-                if len(gameState.getLegalActions()) == 0:
-                    return self.evaluationFunction(gameState)  # No hay acciones legales disponibles
-                v = float('-inf')  # Inicializar valor v como negativo infinito
-                ac = Directions.STOP  # Inicializar acción ac como parar
-                # Iterar sobre todas las acciones legales disponibles
-                for a in gameState.getLegalActions():
-                    # Recursivamente llamar minimax para el siguiente estado
-                    s = minimax(gameState.generateSuccessor(0, a), depth, 1)
-                    if s > v:
-                        v = s  # Actualizar v con el máximo valor encontrado
-                        ac = a  # Actualizar ac con la acción correspondiente al máximo valor
-                if depth == 0:
-                    return ac  # Devolver la mejor acción si estamos en el nivel 0
-                else:
-                    return v  # Devolver el valor máximo encontrado
+    # Implementación de Minimax
+    def minimax(self, gameState, agentIndex, depth):
+        # Condiciones de terminación recursiva
+        if depth is self.depth * gameState.getNumAgents() \
+                or gameState.isLose() or gameState.isWin():
+            return self.evaluationFunction(gameState)  # Evaluar el estado del juego
 
-            # Turno del jugador minimizador (otros agentes)
-            else:
-                if len(gameState.getLegalActions()) == 0:
-                    return self.evaluationFunction(gameState)  # No hay acciones legales disponibles
-                v = float('inf')  # Inicializar valor v como infinito
-                nextAgent = agentID + 1  # Determinar el siguiente agente
-                if nextAgent == gameState.getNumAgents():
-                    nextAgent = 0  # Reiniciar al primer agente si se alcanza el último
-                # Iterar sobre todas las acciones legales disponibles para el agente actual
-                for a in gameState.getLegalActions(agentID):
-                    if nextAgent == 0:
-                        s = minimax(gameState.generateSuccessor(agentID, a), depth + 1, 0)
-                    else:
-                        s = minimax(gameState.generateSuccessor(agentID, a), depth, nextAgent)
-                    v = min(s, v)  # Actualizar v con el mínimo valor encontrado
-                return v  # Devolver el valor mínimo encontrado
+        # Turno del jugador maximizador (Pacman)
+        if agentIndex is 0:
+            return self.maxval(gameState, agentIndex, depth)[1]  # Llamada a maxval
 
-        # Llamar a minimax con el estado de juego inicial y los parámetros iniciales
-        return minimax(gameState, 0, 0)
+        # Turno de los jugadores minimizadores (Fantasmas)
+        else:
+            return self.minval(gameState, agentIndex, depth)[1]  # Llamada a minval
+
+    # Función para el jugador maximizador (Pacman)
+    def maxval(self, gameState, agentIndex, depth):
+        bestAction = ("max", -float("inf"))  # Inicializar la mejor acción con valor -infinito
+        for action in gameState.getLegalActions(agentIndex):
+            # Obtener el sucesor de gameState aplicando la acción actual
+            succAction = (action, self.minimax(gameState.generateSuccessor(agentIndex, action),
+                                            (depth + 1) % gameState.getNumAgents(), depth + 1))
+            # Actualizar la mejor acción basada en el valor del sucesor
+            bestAction = max(bestAction, succAction, key=lambda x: x[1])  # Seleccionar el máximo valor
+
+        return bestAction  # Devolver la mejor acción y su valor asociado
+
+    # Función para los jugadores minimizadores (Fantasmas)
+    def minval(self, gameState, agentIndex, depth):
+        bestAction = ("min", float("inf"))  # Inicializar la mejor acción con valor infinito
+        for action in gameState.getLegalActions(agentIndex):
+            # Obtener el sucesor de gameState aplicando la acción actual
+            succAction = (action, self.minimax(gameState.generateSuccessor(agentIndex, action),
+                                            (depth + 1) % gameState.getNumAgents(), depth + 1))
+            # Actualizar la mejor acción basada en el valor del sucesor
+            bestAction = min(bestAction, succAction, key=lambda x: x[1])  # Seleccionar el mínimo valor
+
+        return bestAction  # Devolver la mejor acción y su valor asociado
 
 
 class AlphaBetaAgent(MultiAgentSearchAgent):
@@ -200,7 +199,58 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
         Returns the minimax action using self.depth and self.evaluationFunction
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+        return self.maxval(gameState, 0, 0, -float("inf"), float("inf"))[0]
+
+    # Implementación de Alpha-Beta Pruning
+    def alphabeta(self, gameState, agentIndex, depth, alpha, beta):
+        # Condiciones de terminación recursiva
+        if depth is self.depth * gameState.getNumAgents() \
+                or gameState.isLose() or gameState.isWin():
+            return self.evaluationFunction(gameState)  # Evaluar el estado del juego
+
+        # Turno del jugador maximizador (Pacman)
+        if agentIndex is 0:
+            return self.maxval(gameState, agentIndex, depth, alpha, beta)[1]  # Llamada a maxval con poda alfa-beta
+
+        # Turno de los jugadores minimizadores (Fantasmas)
+        else:
+            return self.minval(gameState, agentIndex, depth, alpha, beta)[1]  # Llamada a minval con poda alfa-beta
+
+    # Función para el jugador maximizador (Pacman) con Alpha-Beta Pruning
+    def maxval(self, gameState, agentIndex, depth, alpha, beta):
+        bestAction = ("max", -float("inf"))  # Inicializar la mejor acción con valor -infinito
+        for action in gameState.getLegalActions(agentIndex):
+            # Obtener el sucesor de gameState aplicando la acción actual
+            succAction = (action, self.alphabeta(gameState.generateSuccessor(agentIndex, action),
+                                                 (depth + 1) % gameState.getNumAgents(), depth + 1, alpha, beta))
+            # Actualizar la mejor acción basada en el valor del sucesor
+            bestAction = max(bestAction, succAction, key=lambda x: x[1])  # Seleccionar el máximo valor
+
+            # Podar el árbol si el valor es mayor que beta
+            if bestAction[1] > beta:
+                return bestAction  # Devolver la mejor acción si se supera el límite superior beta
+            else:
+                alpha = max(alpha, bestAction[1])  # Actualizar alfa si no se produce la poda
+
+        return bestAction  # Devolver la mejor acción y su valor asociado
+
+    # Función para los jugadores minimizadores (Fantasmas) con Alpha-Beta Pruning
+    def minval(self, gameState, agentIndex, depth, alpha, beta):
+        bestAction = ("min", float("inf"))  # Inicializar la mejor acción con valor infinito
+        for action in gameState.getLegalActions(agentIndex):
+            # Obtener el sucesor de gameState aplicando la acción actual
+            succAction = (action, self.alphabeta(gameState.generateSuccessor(agentIndex, action),
+                                                 (depth + 1) % gameState.getNumAgents(), depth + 1, alpha, beta))
+            # Actualizar la mejor acción basada en el valor del sucesor
+            bestAction = min(bestAction, succAction, key=lambda x: x[1])  # Seleccionar el mínimo valor
+
+            # Podar el árbol si el valor es menor que alpha
+            if bestAction[1] < alpha:
+                return bestAction  # Devolver la mejor acción si se supera el límite inferior alpha
+            else:
+                beta = min(beta, bestAction[1])  # Actualizar beta si no se produce la poda
+
+        return bestAction  # Devolver la mejor acción y su valor asociado
 
 class ExpectimaxAgent(MultiAgentSearchAgent):
     """
