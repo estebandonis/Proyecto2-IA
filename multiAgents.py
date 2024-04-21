@@ -157,7 +157,7 @@ class MinimaxAgent(MultiAgentSearchAgent):
             return self.evaluationFunction(gameState)  # Evaluar el estado del juego
 
         # Turno del jugador maximizador (Pacman)
-        if agentIndex is 0:
+        if agentIndex == 0:
             return self.maxval(gameState, agentIndex, depth)[1]  # Llamada a maxval
 
         # Turno de los jugadores minimizadores (Fantasmas)
@@ -209,7 +209,7 @@ class AlphaBetaAgent(MultiAgentSearchAgent):
             return self.evaluationFunction(gameState)  # Evaluar el estado del juego
 
         # Turno del jugador maximizador (Pacman)
-        if agentIndex is 0:
+        if agentIndex == 0:
             return self.maxval(gameState, agentIndex, depth, alpha, beta)[1]  # Llamada a maxval con poda alfa-beta
 
         # Turno de los jugadores minimizadores (Fantasmas)
