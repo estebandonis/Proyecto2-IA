@@ -265,7 +265,67 @@ class ExpectimaxAgent(MultiAgentSearchAgent):
         legal moves.
         """
         "*** YOUR CODE HERE ***"
-        util.raiseNotDefined()
+
+        return self.expectimax(gameState, 0, 0)
+
+    def expectimax(self, gameState, agentIndex, depth):
+        # Revisamos si la recursividad alcanzó la profundidad máxima, o si el juego ha concluido.
+        if depth == self.depth or gameState.isWin() or gameState.isLose():
+            return self.evaluationFunction(gameState) # Regresamos el estado del juego actual
+
+        # Si es el turno del jugador (Pacman), llamamos a la función maxagent
+        if agentIndex == 0:
+            return self.maxagent(gameState, depth)
+
+        # Si es el turno de los rivales (Fantasmas), llamamos a la función minagent
+        else:
+            return self.minagent(gameState, agentIndex, depth)
+    
+    def maxagent(self, gameState, depth):
+        # Definimos un valor infinito negativo como nuestro valor máximos inicial
+        currentMaxValue = float('-inf')
+        # Verificamos si existen acciones legales disponibles para nuestro agente actual, si no la hay, 
+        # significa que se encuentra en un punto muerto, por lo que retornamos el valor de la evaluación del estado
+        if len(gameState.getLegalActions()) == 0:
+            return self.evaluationFunction(gameState)
+        # Definimos nuestra acción inicial como STOP
+        currentAction = Directions.STOP
+        # Como ya verificamos que si existen valores legales para el agente, iteramos sobre cada uno de ellos para encontrar el que nos devuelva el valor máximo
+        for action in gameState.getLegalActions():
+            # Obtenemos de manera recursiva el valor de nuestra función expectimax para cada acción legal, 
+            # generando un GameState resultante, después de que el agente allá tomado la acción.
+            newMaxValue = self.expectimax(gameState.generateSuccessor(0, action), 1, depth)
+            # Si el valor del estado resultante con la acción es mayor al valor actual, la cambiamos por el valor actual de v y la acción actual por ac
+            if newMaxValue > currentMaxValue:
+                currentMaxValue = newMaxValue
+                currentAction = action
+        # Si la profundidad es 0, retornamos la acción, de lo contrario, retornamos el valor
+        return currentAction if depth == 0 else currentMaxValue
+
+    def minagent(self, gameState, agentIndex, depth):
+        # Definimos un valor inicial del valor de nuestra acción
+        currentMinValue = 0
+        # Verificamos si existen acciones legales para el agente, si no la hay, significando un punto muerto, retornamos el valor de la evaluación del estado
+        if len(gameState.getLegalActions()) == 0:
+            return self.evaluationFunction(gameState)
+        # Obtenemos el Index del siguiente agente
+        nextAgentIndex = agentIndex + 1
+        # En caso el agente actual sea el último de los fantasmas, reiniciamos el ciclo, y colocamos al primer agente (Pacman)
+        nextAgentIndex = 0 if nextAgentIndex == gameState.getNumAgents() else nextAgentIndex
+        # Iteramos sobre cada una de las acciones legales del agente actual
+        for action in gameState.getLegalActions(agentIndex):
+            # Verificamos si el siguiente agente es el Pacman
+            if nextAgentIndex == 0:
+                # Si es así, aumentamos la profundidad en 1
+                newMinValue = self.expectimax(gameState.generateSuccessor(agentIndex, action), 0, depth + 1)
+            else:
+                # De lo contrario, mantenemos la profundidad
+                newMinValue = self.expectimax(gameState.generateSuccessor(agentIndex, action), nextAgentIndex, depth)
+            # Calculamos la probabilidad de la acción, esto le agrega un factor de aleatoriedad al juego, en la que no siempre se va tener una solución óptima para el siguiente movimiento.
+            actionProbability = 1 / len(gameState.getLegalActions(agentIndex))
+            # Y agregamos el valor de la acción y la probabilidad a nuestro valor final
+            currentMinValue += actionProbability * newMinValue
+        return currentMinValue
 
 def betterEvaluationFunction(currentGameState):
     """
