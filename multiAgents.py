@@ -74,17 +74,18 @@ class ReflexAgent(Agent):
         newScaredTimes = [ghostState.scaredTimer for ghostState in newGhostStates]
 
         "*** YOUR CODE HERE ***"
-        # Calculate the distance to the closest food
+        # Calcula la distancia a la comida más cercana
         foodDistances = [manhattanDistance(newPos, food) for food in newFood.asList()]
         closestFoodDistance = min(foodDistances) if foodDistances else 0
 
-        # Calculate the distance to the closest ghost
+        # Calcula la distancia al fantasma más cercano
         ghostDistances = [manhattanDistance(newPos, ghost.getPosition()) for ghost in newGhostStates]
         closestGhostDistance = min(ghostDistances) if ghostDistances else 0
 
-        # Calculate the score based on the distances
+        # Calcula el puntaje basado en las distancias
         score = successorGameState.getScore()
         score -= closestFoodDistance
+        # Cambia el calculo del puntaje dependiendo de si el fantasma está asustado o no
         for i, scared in enumerate(newScaredTimes):
             if scared > 0 and ghostDistances[i] < closestFoodDistance:
                 score -= closestGhostDistance
