@@ -86,10 +86,10 @@ class ReflexAgent(Agent):
         score = successorGameState.getScore()
         score -= closestFoodDistance
         for i, scared in enumerate(newScaredTimes):
-            if scared > 0 and ghostDistances[i] == closestFoodDistance:
+            if scared > 0 and ghostDistances[i] < closestFoodDistance:
                 score -= closestGhostDistance
-                return score
-        score += closestGhostDistance
+            else:
+                score += closestGhostDistance
 
         return score
 
